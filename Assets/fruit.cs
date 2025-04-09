@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class fruit : MonoBehaviour
 {
+    public event Action hasBeenPicked;
+
     private bool picked;
 
     public float gravity = -9.8f; // Gravity force
@@ -53,7 +56,12 @@ public class fruit : MonoBehaviour
             Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
             if (hit != null && hit.transform == transform) // Check if clicking on this object
             {
-                picked = true;
+                if (!picked) 
+                {
+                    picked = true;
+                    Debug.Log("has been picked, coming from the fruit");
+                    hasBeenPicked?.Invoke();
+                }
                 grabbed = true;
                 offset = transform.position - mouseWorldPos;
 
@@ -159,6 +167,11 @@ public class fruit : MonoBehaviour
 
         transform.localScale = ogScale;  // Ensure it's exactly at the original scale
         grabScaleisAnimating = false;
+    }
+    public void DoThing()
+    {
+        Debug.Log("dothing, idk how this works lmao");
+        hasBeenPicked?.Invoke();
     }
 
 }
