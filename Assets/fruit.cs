@@ -2,10 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.Pool;
 
 public class fruit : MonoBehaviour
 {
     public event Action hasBeenPicked;
+
+    private IObjectPool<fruit> objectPool;
+    public IObjectPool<fruit> ObjectPool { set => objectPool = value; }
 
     private bool picked;
 
@@ -168,6 +172,20 @@ public class fruit : MonoBehaviour
         transform.localScale = ogScale;  // Ensure it's exactly at the original scale
         grabScaleisAnimating = false;
     }
+
+    public void Deactivate()
+    {
+        StartCoroutine(DeactivateRoutine(0.0f));
+    }
+
+    IEnumerator DeactivateRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Release the projectile back to the pool
+        objectPool.Release(this);
+    }
+
     public void DoThing()
     {
         Debug.Log("dothing, idk how this works lmao");

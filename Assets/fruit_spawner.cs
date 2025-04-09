@@ -2,17 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Rendering;
 
 public class fruit_spawner : MonoBehaviour
 {
     [SerializeField] private fruit fruitToObserve;
 
-    public GameObject attachedFruit;
+    [Tooltip("fruit prefab")]
+    [SerializeField] private fruit fruitPrefab;
+
+    private IObjectPool<fruit> objectPool;
+    [SerializeField] private bool collectionCheck = true;
+    [SerializeField] private int defaultCapacity = 20;
+    [SerializeField] private int maxSize = 100;
+
 
     private void OnThingHappened()
     {
         // any logic that responds to event goes here
         Debug.Log("Spawn another fruit");
+        GrowFruit();
+
     }
 
     private void Awake()
@@ -21,7 +31,38 @@ public class fruit_spawner : MonoBehaviour
         {
             fruitToObserve.hasBeenPicked += OnThingHappened;
         }
+
+       
+        objectPool = new UnityEngine.Pool.ObjectPool<fruit>(SpawnFruit,
+        OnGetFromPool, OnReleaseToPool,
+        OnDestroyPooledObject, collectionCheck, defaultCapacity, maxSize);
+       
     }
+
+    private fruit SpawnFruit()
+    {
+        fruit fruitInstance = Instantiate(fruitPrefab);
+        fruitInstance.ObjectPool = objectPool;
+        return fruitInstance;
+    }
+
+    private void OnReleaseToPool(fruit pooledObject)
+    {
+        pooledObject.gameObject.SetActive(false);
+    }
+
+    // Invoked when retrieving the next item from the object pool
+    private void OnGetFromPool(fruit pooledObject)
+    {
+        pooledObject.gameObject.SetActive(true);
+    }
+
+    // Invoked when we exceed the maximum number of pooled items (i.e. destroy the pooled object)
+    private void OnDestroyPooledObject(fruit pooledObject)
+    {
+        Destroy(pooledObject.gameObject);
+    }
+
 
     private void OnDestroy()
     {
@@ -34,13 +75,23 @@ public class fruit_spawner : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        attachedFruit = transform.GetChild(0).gameObject;
     }
 
     // Update is called once per frame
     void Update()
     {
-           
+        
+    }
+    void GrowFruit()
+    {
+        fruit spawnedFruit = objectPool.Get();
+
+        if (spawnedFruit == null)
+            return;
+
+        spawnedFruit.transform.SetPositionAndRotation(transform.position, transform.rotation);
+        fruitToObserve = spawnedFruit;
+        fruitToObserve.hasBeenPicked += OnThingHappened;
     }
     
 }
