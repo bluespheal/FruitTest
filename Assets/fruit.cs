@@ -79,7 +79,7 @@ public class fruit : MonoBehaviour
 
                 grabbed = true;
                 offset = transform.position - mouseWorldPos;
-                //velocity = Vector3.zero; // Reset velocity when grabbing
+                velocity = Vector3.zero; // Reset velocity when grabbing
                 lastMousePosition = mouseWorldPos;
             }
         }
@@ -90,6 +90,12 @@ public class fruit : MonoBehaviour
             transform.localScale = ogScale;
         }
 
+        if (!picked)
+        {
+            float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+            return;
+        }
 
         if (grabbed)
         {
@@ -128,7 +134,7 @@ public class fruit : MonoBehaviour
         {
             if (lastFrameGrab)
             {
-                velocity = highestRecentVel;
+                velocity = highestRecentVel/10;
 
                 lastFrameGrab = false;
                 Debug.Log("last frame vel was:");
@@ -153,22 +159,13 @@ public class fruit : MonoBehaviour
 
         velocity = Vector3.ClampMagnitude(velocity, maxGrabVel);
 
-        if (!IsGrounded() && !grabbed && picked) // Only apply gravity if not grounded
+        if (!IsGrounded() && !grabbed) // Only apply gravity if not grounded
         {
             velocity.y += gravity * Time.deltaTime;
         }
         else
         {
             velocity.y = 0; // Stop falling when hitting the ground
-        }
-
-        // Move the object manually
-
-
-        if (!picked)
-        {
-            float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
         }
 
         //Vector3 clampedPosition = transform.position;
@@ -240,12 +237,6 @@ public class fruit : MonoBehaviour
 
         // Release the projectile back to the pool
         objectPool.Release(this);
-    }
-
-    public void DoThing()
-    {
-        Debug.Log("dothing, idk how this works lmao");
-        hasBeenPicked?.Invoke();
     }
 
 }
