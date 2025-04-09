@@ -90,6 +90,7 @@ public class fruit_spawner : MonoBehaviour
             return;
 
         spawnedFruit.transform.SetPositionAndRotation(transform.position, transform.rotation);
+        fruitToObserve.hasBeenPicked -= OnThingHappened;
         fruitToObserve = spawnedFruit;
         fruitToObserve.hasBeenPicked += OnThingHappened;
     }

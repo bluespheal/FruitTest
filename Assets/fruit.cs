@@ -14,13 +14,17 @@ public class fruit : MonoBehaviour
     private bool picked;
 
     public float gravity = -9.8f; // Gravity force
-    private Vector2 velocity;
+    private Vector3 velocity;
+    private Vector3 highestRecentVel;
 
 
-    private bool isDragging = false;
+    private bool grabbed;
     private Vector3 offset;
     private Vector3 lastMousePosition;
-    private bool grabbed;
+    public float maxGrabVel = 10.0f;
+
+    public float velResetTimer = 0.2f;
+    private float velResetTimerOriginal;
 
     public LayerMask groundLayer;
 
@@ -37,6 +41,8 @@ public class fruit : MonoBehaviour
 
     private bool grabScaleisAnimating = false;
 
+    private bool lastFrameGrab = false;
+    private bool duckme;
 
     // Start is called before the first frame update
     void Start()
@@ -44,14 +50,13 @@ public class fruit : MonoBehaviour
         picked = false;
         ogAngle = transform.rotation;
         ogScale = transform.localScale;
-
+        velResetTimerOriginal = velResetTimer;
     }
 
     // Update is called once per frame
     void Update()
     {
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorldPos.z = 0;
        
         GrabAnimation();
 
@@ -66,13 +71,16 @@ public class fruit : MonoBehaviour
                     Debug.Log("has been picked, coming from the fruit");
                     hasBeenPicked?.Invoke();
                 }
-                grabbed = true;
-                offset = transform.position - mouseWorldPos;
 
                 if (!grabScaleisAnimating)
                 {
                     StartCoroutine(AnimateScale());
                 }
+
+                grabbed = true;
+                offset = transform.position - mouseWorldPos;
+                //velocity = Vector3.zero; // Reset velocity when grabbing
+                lastMousePosition = mouseWorldPos;
             }
         }
 
@@ -85,21 +93,65 @@ public class fruit : MonoBehaviour
 
         if (grabbed)
         {
-            // Move object with mouse while keeping offset
+            lastFrameGrab = true;
             Vector3 newPosition = mouseWorldPos + offset;
-            velocity = (newPosition - transform.position) / Time.deltaTime; // Calculate velocity
+            velocity = (mouseWorldPos - lastMousePosition) / Time.deltaTime;
             
+            
+            lastMousePosition = mouseWorldPos;
             transform.position = newPosition;
+            // Capture mouse movement velocity
+
+
+            if (velocity != Vector3.zero)
+            {
+                highestRecentVel = velocity;
+            }
+
+            if (velocity == Vector3.zero) {
+                velResetTimer -= Time.deltaTime;
+                Debug.Log("vel is zero, resetting...");
+            }
+            else {
+                velResetTimer = velResetTimerOriginal;
+            }
+
+            if (velResetTimer < 0.0f)
+            {
+                Debug.Log("Resetting highest vel to zero");
+
+                highestRecentVel = Vector3.zero;
+            }
+
         }
         else
         {
-            // Apply momentum after release
-            transform.position += new Vector3(velocity.x * Time.deltaTime, velocity.y * Time.deltaTime, 0);
+            if (lastFrameGrab)
+            {
+                velocity = highestRecentVel;
 
-            //transform.position += velocity * Time.deltaTime;
-            //velocity *= 0.95f; // Apply damping to gradually stop the movement
+                lastFrameGrab = false;
+                Debug.Log("last frame vel was:");
+                Debug.Log(highestRecentVel);
+            }
+
+            //Debug.Log(velocity);
+
+            if (!IsGrounded()) // Apply gravity if not touching the ground
+            {
+                velocity.y += gravity * Time.deltaTime;
+            }
+            else
+            {
+                velocity.y = 0; // Stop vertical movement on ground
+                velocity.x *= 0.995f; // Gradual slowdown
+            }
+
+            // Apply momentum and gravity movement
+            transform.position += velocity * Time.deltaTime;
         }
 
+        velocity = Vector3.ClampMagnitude(velocity, maxGrabVel);
 
         if (!IsGrounded() && !grabbed && picked) // Only apply gravity if not grounded
         {
@@ -111,7 +163,6 @@ public class fruit : MonoBehaviour
         }
 
         // Move the object manually
-        transform.position += new Vector3(0, velocity.y * Time.deltaTime, 0);
 
 
         if (!picked)
@@ -119,6 +170,11 @@ public class fruit : MonoBehaviour
             float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
             transform.rotation = Quaternion.Euler(0, 0, angle);
         }
+
+        //Vector3 clampedPosition = transform.position;
+        //clampedPosition.x = Mathf.Clamp(clampedPosition.x, -10, 10);
+        //clampedPosition.y = Mathf.Clamp(clampedPosition.y, -10, 10);
+        //transform.position = clampedPosition;
 
     }
 
