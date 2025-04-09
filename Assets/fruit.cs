@@ -6,13 +6,12 @@ public class fruit : MonoBehaviour
 {
 
     public float gravity = -9.8f; // Gravity force
-    //private Vector2 velocity;
-    
+    private Vector2 velocity;
+
 
     private bool isDragging = false;
     private Vector3 offset;
     private Vector3 lastMousePosition;
-    private Vector3 gvelocity;
     private bool grabbed;
 
     public LayerMask groundLayer;
@@ -28,16 +27,17 @@ public class fruit : MonoBehaviour
     {
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPos.z = 0;
+        
+        //Debug.Log(velocity);
 
-        if (Input.GetMouseButtonDown(0)) // Click detection
+
+        if (Input.GetMouseButtonDown(0)) // Left-click pressed
         {
             Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
-            if (hit != null && hit.transform == transform)
+            if (hit != null && hit.transform == transform) // Check if clicking on this object
             {
                 grabbed = true;
                 offset = transform.position - mouseWorldPos;
-                gvelocity = Vector3.zero; // Reset velocity when picking up
-                lastMousePosition = mouseWorldPos; // Store initial mouse position
             }
         }
 
@@ -46,41 +46,36 @@ public class fruit : MonoBehaviour
             grabbed = false;
         }
 
-       
 
         if (grabbed)
         {
             // Move object with mouse while keeping offset
             Vector3 newPosition = mouseWorldPos + offset;
-            gvelocity = (mouseWorldPos - lastMousePosition) / Time.deltaTime; // Calculate velocity based on mouse movement
-            lastMousePosition = mouseWorldPos; // Update last position
+            velocity = (newPosition - transform.position) / Time.deltaTime; // Calculate velocity
+            
             transform.position = newPosition;
-            Debug.Log(gvelocity);
-            //gvelocity /= 2.0f;
         }
         else
         {
             // Apply momentum after release
-            //Debug.Log(new Vector3(gvelocity.x * Time.deltaTime, gvelocity.y * Time.deltaTime, 0));
-            transform.position += gvelocity * Time.deltaTime;
-            gvelocity *= 0.95f;
+            transform.position += new Vector3(velocity.x * Time.deltaTime, velocity.y * Time.deltaTime, 0);
 
             //transform.position += velocity * Time.deltaTime;
-            //gvelocity *= 0.95f; // Apply damping to gradually stop the movement
+            //velocity *= 0.95f; // Apply damping to gradually stop the movement
         }
 
 
-        //if (!IsGrounded() && !grabbed) // Only apply gravity if not grounded
-        //{
-        //    velocity.y += gravity * Time.deltaTime;
-        //}
-        //else
-        //{
-        //    velocity.y = 0; // Stop falling when hitting the ground
-        //}
+        if (!IsGrounded() && !grabbed) // Only apply gravity if not grounded
+        {
+            velocity.y += gravity * Time.deltaTime;
+        }
+        else
+        {
+            velocity.y = 0; // Stop falling when hitting the ground
+        }
 
         // Move the object manually
-        //transform.position += new Vector3(0, velocity.y * Time.deltaTime, 0);
+        transform.position += new Vector3(0, velocity.y * Time.deltaTime, 0);
 
     }
 
