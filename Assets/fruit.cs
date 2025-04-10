@@ -47,6 +47,11 @@ public class fruit : MonoBehaviour
     private GameObject tree;
     private float currentTreeSkew;
     private float finalTreePos;
+    private float etime = 0.0f;
+
+    private GameObject trunk;
+    private float currentTrunkSkew;
+    private float finalTrunkPos;
 
     // Start is called before the first frame update
     void Start()
@@ -59,6 +64,7 @@ public class fruit : MonoBehaviour
         initial_pos = transform.position;
 
         tree = GameObject.Find("foliage");
+        trunk = GameObject.Find("trunk");
 
     }
 
@@ -76,8 +82,6 @@ public class fruit : MonoBehaviour
                 picked = true;
                 hasBeenPicked?.Invoke();
             }
-            //tree.GetComponent<SpriteRenderer>().material.SetVector("_mousePos", -mouseWorldPos);
-
         }
 
         if (Input.GetMouseButtonDown(0)) // Left-click pressed
@@ -120,8 +124,12 @@ public class fruit : MonoBehaviour
 
                 currentTreeSkew = -(initial_pos.x - mouseWorldPos.x);
                 tree.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", currentTreeSkew);
-            
+
+                currentTrunkSkew = -(initial_pos.x - mouseWorldPos.x)/5;
+                trunk.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", currentTrunkSkew);
             }
+            finalTreePos = currentTreeSkew;
+            finalTrunkPos = currentTrunkSkew;
 
             float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
             transform.rotation = Quaternion.Euler(0, 0, angle);
@@ -130,8 +138,12 @@ public class fruit : MonoBehaviour
         }
         else
         {
-
-            tree.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", BounceToZero(0f, 2.0f, 0.2f, 4.0f));
+            etime += Time.deltaTime; 
+            currentTreeSkew = BounceToZero(finalTreePos, etime, 3f, 7f);
+            currentTrunkSkew = BounceToZero(finalTrunkPos, etime, 7f, 10f);
+           
+            tree.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", currentTreeSkew);
+            trunk.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", currentTrunkSkew);
         }
 
         if (grabbed)
@@ -197,12 +209,6 @@ public class fruit : MonoBehaviour
         {
             velocity.y = 0; // Stop falling when hitting the ground
         }
-
-        //Vector3 clampedPosition = transform.position;
-        //clampedPosition.x = Mathf.Clamp(clampedPosition.x, -10, 10);
-        //clampedPosition.y = Mathf.Clamp(clampedPosition.y, -10, 10);
-        //transform.position = clampedPosition;
-
     }
 
     void GrabAnimation()
@@ -260,8 +266,6 @@ public class fruit : MonoBehaviour
     {
         return initialValue * Mathf.Exp(-damping * time) * Mathf.Cos(frequency * time * Mathf.PI);
     }
-
-
 
     public void Deactivate()
     {

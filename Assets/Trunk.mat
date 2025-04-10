@@ -20,9 +20,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Tree
-  m_Shader: {fileID: -6465566751694194690, guid: eb5fd697292e3ea4ba7e0532270ca04f, type: 3}
-  m_Parent: {fileID: -876546973899608171, guid: eb5fd697292e3ea4ba7e0532270ca04f, type: 3}
+  m_Name: Trunk
+  m_Shader: {fileID: -6465566751694194690, guid: b08a7986f09d3b845b433b776f9f9030, type: 3}
+  m_Parent: {fileID: -876546973899608171, guid: b08a7986f09d3b845b433b776f9f9030, type: 3}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -35,10 +35,14 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _MainTexture:
+        m_Texture: {fileID: 2800000, guid: faedb73e4d512244e87b0663a7cbfcee, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _ScaleFactor: 0.7
+    - _ScaleFactor: 0.05
     m_Colors:
     - _mousePos: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
