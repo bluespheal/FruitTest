@@ -12,6 +12,7 @@ public class fruit : MonoBehaviour
     public IObjectPool<fruit> ObjectPool { set => objectPool = value; }
 
     private bool picked;
+    private Vector3 initial_pos;
 
     public float gravity = -9.8f; // Gravity force
     private Vector3 velocity;
@@ -51,6 +52,8 @@ public class fruit : MonoBehaviour
         ogAngle = transform.rotation;
         ogScale = transform.localScale;
         velResetTimerOriginal = velResetTimer;
+
+        initial_pos = transform.position;
     }
 
     // Update is called once per frame
@@ -63,13 +66,22 @@ public class fruit : MonoBehaviour
         if (Input.GetMouseButtonDown(0)) // Left-click pressed
         {
             Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
+            Debug.Log(Vector2.Distance(transform.position, initial_pos));
             if (hit != null && hit.transform == transform) // Check if clicking on this object
             {
                 if (!picked) 
                 {
-                    picked = true;
-                    Debug.Log("has been picked, coming from the fruit");
-                    hasBeenPicked?.Invoke();
+                    
+                    if (Vector2.Distance(transform.position, initial_pos) > 0.1f)
+                    {
+                        picked = true;
+                        print("snap");
+
+                        Debug.Log("has been picked, coming from the fruit");
+                        hasBeenPicked?.Invoke();
+
+                    }
+
                 }
 
                 if (!grabScaleisAnimating)
@@ -92,11 +104,23 @@ public class fruit : MonoBehaviour
 
         if (!picked)
         {
+            if (grabbed)
+            {
+                lastFrameGrab = true;
+                Vector3 newPosition = mouseWorldPos + offset;
+                velocity = (mouseWorldPos - lastMousePosition) / Time.deltaTime;
+
+
+                lastMousePosition = mouseWorldPos;
+                transform.position = newPosition;
+            }
+
             float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
             transform.rotation = Quaternion.Euler(0, 0, angle);
             return;
-        }
 
+        }
+            
         if (grabbed)
         {
             lastFrameGrab = true;
