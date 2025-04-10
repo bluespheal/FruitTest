@@ -6,19 +6,22 @@ using UnityEngine.Pool;
 
 public class fruit : MonoBehaviour
 {
+    // Event triggered when the fruit has been picked
     public event Action hasBeenPicked;
 
+    // Object pooling reference
     private IObjectPool<fruit> objectPool;
     public IObjectPool<fruit> ObjectPool { set => objectPool = value; }
 
-    private bool picked;
-    private Vector3 initial_pos;
+    private bool picked; // Indicates if the fruit has been picked
+    private Vector3 initial_pos;// Stores the initial position of the fruit
 
-    public float gravity = -9.8f; // Gravity force
+    // Physics properties
+    public float gravity = -9.8f; 
     private Vector3 velocity;
     private Vector3 highestRecentVel;
 
-
+    // Grab-related properties
     private bool grabbed;
     private Vector3 offset;
     private Vector3 lastMousePosition;
@@ -28,22 +31,25 @@ public class fruit : MonoBehaviour
     private float velResetTimerOriginal;
 
     public LayerMask groundLayer;
+    private bool lastFrameGrab = false;
 
+    // Animation properties
     public float angleAmount = 5f;  // How far it twines (± degrees)
     private Quaternion ogAngle;
     public float anim_speed = 2f;
 
+    // Scaling properties
     public float maxScale = 0.2f;
     private Vector3 ogScale;
 
+    public float rotationSpeed = 20f;
 
     public float grabScaleFactor = 1.5f;  // How much to scale up (1.2 = 120% of original size)
     public float grabScaleDuration = 0.1f;     // Duration of the animation
 
     private bool grabScaleisAnimating = false;
 
-    private bool lastFrameGrab = false;
-
+    // Tree and trunk movement
     private GameObject tree;
     private float currentTreeSkew;
     private float finalTreePos;
@@ -53,6 +59,11 @@ public class fruit : MonoBehaviour
     private float currentTrunkSkew;
     private float finalTrunkPos;
 
+    // Scaling animation control
+    public float duration = 1f; // Time it takes to scale from 0 to 1
+    private float elapsedTime = 0f;
+    private bool scaling = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -60,9 +71,11 @@ public class fruit : MonoBehaviour
         ogAngle = transform.rotation;
         ogScale = transform.localScale;
         velResetTimerOriginal = velResetTimer;
-
         initial_pos = transform.position;
 
+        transform.localScale = Vector3.zero; // Set initial scale to 0
+
+        // Find tree and trunk objects
         tree = GameObject.Find("foliage");
         trunk = GameObject.Find("trunk");
 
@@ -72,18 +85,31 @@ public class fruit : MonoBehaviour
     void Update()
     {
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-       
-        GrabAnimation();
+        GrabAnimation();// Handle grab animation
 
+        // Scaling effect when spawned
+        if (scaling)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsedTime / duration); // Normalize time
+            transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, progress * 3);
+
+            if (progress >= 1f)
+                scaling = false; // Stop updating once fully scaled
+        }
+
+        // Check if fruit has moved from its initial position
         if (!picked)
         {
-            if (Vector2.Distance(transform.position, initial_pos) > 0.5f)
+
+                if (Vector2.Distance(transform.position, initial_pos) > 0.5f)
             {
                 picked = true;
                 hasBeenPicked?.Invoke();
             }
         }
-
+        
+        // Handle grabbing logic
         if (Input.GetMouseButtonDown(0)) // Left-click pressed
         {
             Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
@@ -104,7 +130,7 @@ public class fruit : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonUp(0)) // Left-click released
+        if (Input.GetMouseButtonUp(0)) // Release grab
         {
             grabbed = false;
             transform.localScale = ogScale;
@@ -209,6 +235,21 @@ public class fruit : MonoBehaviour
         {
             velocity.y = 0; // Stop falling when hitting the ground
         }
+
+        if (velocity.x != 0)
+        {
+            if (!IsGrounded())
+            {
+                float direction = Mathf.Sign(velocity.x); // -1 for left, 1 for right
+                transform.Rotate(Vector3.forward * direction * (velocity.x * rotationSpeed) * Time.deltaTime);
+            }
+            else
+            {
+                float direction = Mathf.Sign(velocity.x); // -1 for left, 1 for right
+                transform.Rotate(Vector3.forward * direction * (velocity.x * rotationSpeed * 4) * Time.deltaTime);
+            }
+        }
+
     }
 
     void GrabAnimation()

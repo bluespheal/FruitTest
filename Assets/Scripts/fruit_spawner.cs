@@ -8,21 +8,16 @@ public class fruit_spawner : MonoBehaviour
 {
     [SerializeField] private fruit fruitToObserve;
 
-    [Tooltip("fruit prefab")]
     [SerializeField] private fruit fruitPrefab;
 
     private IObjectPool<fruit> objectPool;
     [SerializeField] private bool collectionCheck = true;
     [SerializeField] private int defaultCapacity = 20;
-    [SerializeField] private int maxSize = 100;
-
+    [SerializeField] private int maxSize = 50;
 
     private void OnThingHappened()
     {
-        // any logic that responds to event goes here
-        Debug.Log("Spawn another fruit");
         GrowFruit();
-
     }
 
     private void Awake()
@@ -31,7 +26,6 @@ public class fruit_spawner : MonoBehaviour
         {
             fruitToObserve.hasBeenPicked += OnThingHappened;
         }
-
        
         objectPool = new UnityEngine.Pool.ObjectPool<fruit>(SpawnFruit,
         OnGetFromPool, OnReleaseToPool,
