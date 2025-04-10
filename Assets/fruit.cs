@@ -43,7 +43,10 @@ public class fruit : MonoBehaviour
     private bool grabScaleisAnimating = false;
 
     private bool lastFrameGrab = false;
-    private bool duckme;
+
+    private GameObject tree;
+    private float currentTreeSkew;
+    private float finalTreePos;
 
     // Start is called before the first frame update
     void Start()
@@ -54,6 +57,9 @@ public class fruit : MonoBehaviour
         velResetTimerOriginal = velResetTimer;
 
         initial_pos = transform.position;
+
+        tree = GameObject.Find("foliage");
+
     }
 
     // Update is called once per frame
@@ -63,26 +69,24 @@ public class fruit : MonoBehaviour
        
         GrabAnimation();
 
+        if (!picked)
+        {
+            if (Vector2.Distance(transform.position, initial_pos) > 0.5f)
+            {
+                picked = true;
+                hasBeenPicked?.Invoke();
+            }
+            //tree.GetComponent<SpriteRenderer>().material.SetVector("_mousePos", -mouseWorldPos);
+
+        }
+
         if (Input.GetMouseButtonDown(0)) // Left-click pressed
         {
             Collider2D hit = Physics2D.OverlapPoint(mouseWorldPos);
-            Debug.Log(Vector2.Distance(transform.position, initial_pos));
+            
             if (hit != null && hit.transform == transform) // Check if clicking on this object
             {
-                if (!picked) 
-                {
-                    
-                    if (Vector2.Distance(transform.position, initial_pos) > 0.1f)
-                    {
-                        picked = true;
-                        print("snap");
-
-                        Debug.Log("has been picked, coming from the fruit");
-                        hasBeenPicked?.Invoke();
-
-                    }
-
-                }
+               
 
                 if (!grabScaleisAnimating)
                 {
@@ -113,6 +117,10 @@ public class fruit : MonoBehaviour
 
                 lastMousePosition = mouseWorldPos;
                 transform.position = newPosition;
+
+                currentTreeSkew = -(initial_pos.x - mouseWorldPos.x);
+                tree.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", currentTreeSkew);
+            
             }
 
             float angle = Mathf.Sin(Time.time * anim_speed) * angleAmount;
@@ -120,7 +128,12 @@ public class fruit : MonoBehaviour
             return;
 
         }
-            
+        else
+        {
+
+            tree.GetComponent<SpriteRenderer>().material.SetFloat("_Distance", BounceToZero(0f, 2.0f, 0.2f, 4.0f));
+        }
+
         if (grabbed)
         {
             lastFrameGrab = true;
@@ -140,7 +153,6 @@ public class fruit : MonoBehaviour
 
             if (velocity == Vector3.zero) {
                 velResetTimer -= Time.deltaTime;
-                Debug.Log("vel is zero, resetting...");
             }
             else {
                 velResetTimer = velResetTimerOriginal;
@@ -148,8 +160,6 @@ public class fruit : MonoBehaviour
 
             if (velResetTimer < 0.0f)
             {
-                Debug.Log("Resetting highest vel to zero");
-
                 highestRecentVel = Vector3.zero;
             }
 
@@ -161,11 +171,7 @@ public class fruit : MonoBehaviour
                 velocity = highestRecentVel/10;
 
                 lastFrameGrab = false;
-                Debug.Log("last frame vel was:");
-                Debug.Log(highestRecentVel);
             }
-
-            //Debug.Log(velocity);
 
             if (!IsGrounded()) // Apply gravity if not touching the ground
             {
@@ -249,6 +255,13 @@ public class fruit : MonoBehaviour
         transform.localScale = ogScale;  // Ensure it's exactly at the original scale
         grabScaleisAnimating = false;
     }
+
+    public static float BounceToZero(float initialValue, float time, float damping = 0.3f, float frequency = 4f)
+    {
+        return initialValue * Mathf.Exp(-damping * time) * Mathf.Cos(frequency * time * Mathf.PI);
+    }
+
+
 
     public void Deactivate()
     {
